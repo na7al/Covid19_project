@@ -1,0 +1,92 @@
+
+
+--Looking for total deaths from the total cases 
+SELECT 
+  location, date, total_cases,total_deaths,
+   ((total_deaths/total_cases) *100) AS percentage_of_deaths 
+FROM `covid19.covid_deaths`
+WHERE continent IS NOT Null
+--WHERE location = "Egypt"
+ORDER BY 1,2
+
+--Looking for the total cases vs the population 
+SELECT 
+  location,date,total_cases,population,
+  ((total_cases/population)*100) AS percentage_of_total_cases
+FROM `covid19.covid_deaths`
+WHERE continent IS NOT Null
+--WHERE location = "Egypt"
+ORDER BY 1,2
+
+--looking at the countries with the highest Infection Rate to population 
+SELECT 
+  location,population,
+  MAX(total_cases) AS highest_infection_number,
+  MAX((total_cases/population)*100) AS percentage_of_infection
+FROM `covid19.covid_deaths`
+WHERE continent IS NOT Null
+Group BY location, population
+ORDER BY 1, 2 DESC 
+
+--looking for countries with highest deaths rate to cases 
+SELECT location,
+
+ MAX(CAST(total_deaths AS int )) AS max_deaths_number,
+ MAX((total_deaths/total_cases)*100) AS percentage_of_deaths
+FROM `covid19.covid_deaths`
+WHERE continent IS not null
+GROUP BY location 
+ORDER BY max_deaths_number DESC
+
+--looking at the continent 
+SELECT continent,
+MAX(CAST(total_deaths AS int )) AS max_deaths_number, 
+FROM `covid19.covid_deaths`
+WHERE continent IS not null
+GROUP BY continent 
+ORDER BY max_deaths_number DESC
+
+--Look at the continents with the highest death / population 
+
+SELECT continent, 
+(MAX(total_deaths/population)*100) AS highest_deaths_population
+FROM `covid19.covid_deaths`
+WHERE continent IS NOT NULL
+GROUP BY continent
+ORDER BY highest_deaths_population DESC
+
+-- Global Numbers 
+--everyday's new cases /deaths 
+--percentage of everyday's deaths 
+SELECT date,
+ SUM(new_cases) AS total_new_cases,
+ SUM(new_deaths) AS total_new_deaths,
+ (SUM(new_deaths)/SUM(new_cases)*100) AS percentage_of_deaths
+FROM `covid19.covid_deaths`
+WHERE continent IS NOT NULL
+GROUP BY date
+ORDER BY 1,2
+ --total new cases/ deaths and the deaths percentage till 6/1/2022
+ SELECT 
+   SUM(new_cases) AS total_new_cases,
+   SUM(new_deaths) AS total_new_deaths,
+   (SUM(new_deaths)/SUM(new_cases)*100) AS percentage_of_deaths
+FROM `covid19.covid_deaths`
+WHERE continent IS NOT NULL
+ORDER BY 1,2
+
+--Compare the total vaccination to the total population 
+
+SELECT 
+  cd.continent, cd.location, cd.date, cd.population, 
+  cv.new_vaccinations,
+  SUM(cv.new_vaccinations) OVER (PARTITION BY cd.location ORDER BY cd.location,cd.date) as total_vaccinations,
+  (SUM(cv.new_vaccinations) OVER (PARTITION BY cd.location ORDER BY cd.location,cd.date)/cd.population)*100 AS percentage_of_vaccinated_people
+FROM 
+  `covid19.covid_deaths` cd
+  JOIN `covid19.covid_vaccinations` cv
+  ON cd.location = cv.location AND cd.date = cv.date
+WHERE 
+  cd.continent IS NOT NULL 
+
+
